@@ -1,0 +1,227 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<link rel="stylesheet" href="assets/css/mynix-card.css">
+<style>
+.info {
+	display: inline-block;
+	line-height: 19px;
+	padding: 11px 15px;
+	font-size: 14px;
+	text-align: left;
+	margin: 25px;
+	background-color: #FFF;
+	border-left: 4px solid #FFBA00;
+	box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
+	color: #444;
+	font-family: "Open Sans", sans-serif;
+	outline: 0px none;
+}
+
+.page-wrapper {
+	max-width: 800px;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: white;
+	height: 100%;
+	padding: 10px;
+	box-shadow: 0 0 10px;
+	overflow-y: auto;
+}
+
+.notice {
+	background-color: #6495ED;
+	padding: 10px;
+	color: #FFF;
+	border-radius: 5px;
+	margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+	<div class="page-wrapper">
+		<div class="info">
+			This plug-in can be embeded into your webshop checkout page, using the existent card form.<br> Its aim is to help the
+			user finding the card info that your checkout page would require.
+			<p>
+				It may be used in tandem with a <a href="http://sandbox.mynixworld.info/ccv-validator/">card validator class</a> that
+				would help validating the card info and guessing the card brand (which I did herein).
+			</p>
+		</div>
+		<!-- START sample inputs for the card -->
+		<table style="margin-left: 0">
+			<tr>
+				<td>
+					<table class="info">
+						<tr>
+							<td colspan="3"><p class="notice">
+									Please enter some <strong>dummy</strong> card information to test the way this plug-in works. <strong>DO NOT</strong>
+									use any real card number! However, no data is collected or transmitted remotely, but anyway...<br> Btw: PayPal
+									provides some <a href="https://www.paypalobjects.com/en_US/vhelp/paypalmanager_help/credit_card_numbers.htm"
+										target="blank">test credit card account numbers</a> :-)
+								</p></td>
+						</tr>
+						<tr>
+							<td><label>Card owner:</label></td>
+							<td colspan="2"><input name="card-owner" type="text" size="26" maxlength="26" value="Guest Buyer"
+								pattern="[a-zA-Z\s]+"></td>
+						</tr>
+						<tr>
+							<td><label>Card number:</label></td>
+							<td colspan="2"><input name="card-number" type="text" maxlength="19" size="19" value="4111 1111 1111 1111"
+								placeholder="•••• •••• •••• ••••" pattern="[0-9]{15,19}" required autofocus></td>
+						</tr>
+						<tr>
+							<td><label>Expiry (mm/yy):</label></td>
+							<td><input name="card-expiry" type="text" pattern="[0-9]{2}/[0-9]{2,4}" maxlength="7" size="7" value="01/17"
+								placeholder="MM/YY" /></td>
+							<td><label>CVV:</label><input name="card-cvc" type="text" maxlength="4" size="4" pattern="[0-9]{3,4}" min="0"
+								value="123"></td>
+						</tr>
+						<tr>
+							<td><label>Card brand:</label></td>
+							<td><label>Color / Top color:</label></td>
+							<td><label>Flip direction:</label></td>
+						</tr>
+						<tr>
+							<td><select name="card-brand">
+							</select></td>
+							<td><input type="color" name="card-color" value="#191278"> <input type="color" name="card-brand-color"
+								value="#ffffff"></td>
+							<td><select name="flip-degree"><option value="180">left-to-right</option>
+									<option value="-180" selected="selected">right-to-left
+									<option></select></td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+
+		</table>
+		<!-- END sample inputs -->
+
+		<div style="width: 350px; height: 220px; margin-left: auto; margin-right: auto;">
+			<!-- the card starts here -->
+			<div class="card-wrapper">
+				<div class="the-card">
+					<div class="card-front card-face card-shadow">
+						<div class="card-brand-wrapper">
+							<div class="card-brand">
+								<img>
+							</div>
+						</div>
+						<div class="card-chip">
+							<div class="side left"></div>
+							<div class="side right"></div>
+							<div class="vertical top"></div>
+							<div class="vertical bottom"></div>
+						</div>
+						<div class="card-data">
+							<div>
+								<span class="card-number" style="font-size: 22px"></span>
+							</div>
+							<div class="first-digits"></div>
+							<div class="expiry-wrapper">
+								<div class="left-label">EXPIRES END</div>
+								<div class="left-label">
+									<div class="upper-labels">MONTH/YEAR</div>
+									<div>
+										<span class="card-expiry"></span>
+									</div>
+								</div>
+							</div>
+
+							<span class="card-owner"></span>
+						</div>
+						<div class="lines-down"></div>
+						<div class="lines-up"></div>
+					</div>
+					<div class="card-back card-face card-shadow">
+						<div class="card-version"></div>
+						<div class="card-magnetic-bar"></div>
+						<div class="shiny"></div>
+						<div class="cvc-wrapper">
+							<span class="card-cvc">123</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- the card ends here -->
+		</div>
+	</div>
+	<script type="text/javascript" src="assets/js/jquery.js"></script>
+	<script type="text/javascript" src="assets/js/mynix-card.js"></script>
+	<script type="text/javascript" src="assets/js/mynix-ccv-validator.js"></script>
+	<script type="text/javascript">
+        (function($, validator, plugin) {
+            $('input[name="card-number"]').keyup(function(e) {
+                validator.init(e.target.value);
+                var cardType = validator.is_valid_issuer(true), t = false;
+                if (false !== cardType) {
+                    var o = $('select[name="card-brand"]');
+                    switch (cardType) {
+                    case validator.AMEX:
+                        t = 'amex';
+                        break;
+                    case validator.VISA:
+                        t = 'visa';
+                        break;
+                    case validator.MASTER:
+                        t = 'mastercard';
+                        break;
+                    case validator.DISCOVER:
+                        t = 'discover';
+                        break;
+                    case validator.DINERS:
+                        t = 'dinersclub';
+                        break;
+                    case validator.JCB:
+                        t = 'jcb';
+                        break;
+                    case validator.MAESTRO:
+                        t = 'maestro';
+                        break;
+                    }
+
+                    (false !== t && o.val() != t) && o.val(t).change();
+                }
+            });
+
+            // init card-brand list using the available card styles
+            $.each(plugin.get_card_styles(), function(key, value) {
+                $('select[name="card-brand"]').append($('<option></option>').attr('value', key).text(key));
+            });
+
+            var data = {
+                number : 'input[name="card-number"]',
+                expiry : 'input[name="card-expiry"]',
+                cvv : 'input[name="card-cvc"]',
+                owner : 'input[name="card-owner"]'
+            };
+
+            // initialize the card plug-in
+            plugin.init(data);
+
+            // initialize the event for the top color change
+            $('input[name="card-brand-color"]').change(function(e) {
+                $('body').trigger('payment.cardTopColor', e.target.value);
+            });
+
+            // initialize the event for the theme base color change
+            $('input[name="card-color"]').change(function(e) {
+                $('body').trigger('payment.cardBaseColor', e.target.value);
+            });
+
+            // initialize the event for the theme style change by card type
+            $('select[name="card-brand"]').change(function(e) {
+                $('body').trigger('payment.cardType', e.target.value);
+            }).trigger('change');
+
+            // initialize the event for change the card flipping direction 
+            $('select[name="flip-degree"]').change(function(e) {
+                $('body').trigger('payment.cardFlipDegree', e.target.value);
+            });
+
+        })(jQuery, Mynix.CC_Validator, Mynix_FlipCard);
+    </script>
+</body>
+</html>
