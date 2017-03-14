@@ -384,6 +384,9 @@ var Mynix_FlipCard = (function($) {
                 function(item) {
                     var sel = $(this), val = item.target.value;
 
+                    if ('undefined' === typeof val)
+                        return;
+
                     // make sure we preserve the space take by the field, even when empty
                     val.length || (val = $(this).attr('placeholder'));
                     val.length || (val = '\t');
