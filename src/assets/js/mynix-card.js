@@ -2,6 +2,9 @@ var Mynix_FlipCard = (function($) {
 
     var UNDEF = 'undefined';
 
+    // an object that contains the instance setup
+    var data = null;
+
     // an object that points to the card brand logo images; the object keys are:
     // {path:url,format:png|jpg|etc,img:{visa:name.format,maestro:name.format,mastercard:name.format,..}}
     var card_logos = null;
@@ -131,6 +134,12 @@ var Mynix_FlipCard = (function($) {
     var flip_status = '0';// current flip direction in degrees
     var flip_back = '-180';// back face flip direction in degrees
 
+    /**
+     * Event to update the card on inputs change updates
+     * 
+     * @param {Object}
+     *            item - The element that triggered the change event
+     */
     var onInputChange = function(item) {
         var sel = $(this), val = item.target.value;
 
@@ -158,10 +167,16 @@ var Mynix_FlipCard = (function($) {
         }
     };
 
+    /**
+     * Event when the CVV input element gains focus
+     */
     var onCVVFocusIn = function() {
         flip_card(flip_back);
     };
 
+    /**
+     * Event when the CVV input loses focus
+     */
     var onCVVFocusOut = function() {
         flip_card('0');// flip to front
     };
@@ -170,24 +185,62 @@ var Mynix_FlipCard = (function($) {
         flip_card('0');// flip to front
     };
 
+    /**
+     * Event when the card type was changed
+     * 
+     * @param {Object}
+     *            sender - The sender of the event
+     * @param {String}
+     *            cardType - The new type of the card
+     */
     var onCardTypeChange = function(sender, cardType) {
         setCardStyle(cardType);
     };
 
+    /**
+     * Event that triggers when a certain condition was change such that it requires the card to flip in one direction or
+     * other.
+     * 
+     * @param {Object}
+     *            sender - The sender of the event
+     * @param {number}
+     *            degree - The number of degree to flip the card
+     */
     var onCardFlipChange = function(sender, degree) {
         flip_back = degree;
     };
 
+    /**
+     * Event when the card color has to be changed
+     * 
+     * @param {Object}
+     *            sender - The sender of the event
+     * @param {String}
+     *            color- The new color of the card
+     */
     var onCardColorChange = function(sender, color) {
         changeBaseColor(color);
     };
 
+    /**
+     * Event when the card's top color has to be changed
+     * 
+     * @param {Object}
+     *            sender - The sender of the event
+     * @param {String}
+     *            color- The new top color of the card
+     */
     var onCardTopColorChange = function(sender, color) {
         $('.card-brand-wrapper').css({
             'background-color' : color
         });
     };
 
+    /**
+     * Get the current card's style
+     * 
+     * @returns {String} Returns the card's style
+     */
     function get_card_styles() {
         return card_styles;
     }
@@ -422,10 +475,11 @@ var Mynix_FlipCard = (function($) {
     /**
      * Initializes the class by the given data. Binds its events to the DOM elements.
      * 
-     * @param data
-     *            An object which provides a map to the name of expected HTML elements:
+     * @param options
+     *            An object of tupples which provide the selectors for the source INPUT elements (eg. key:selector). The
+     *            change event of these input selectors will be bound to the card internal CSS classes, as bellow:
      * 
-     * {number:card-number, expiry:card-expiry, cvv:card-cvc, owner:card-owner}
+     * {number-selector:.card-number, expiry-selector:.card-expiry, cvv-selector:.card-cvc, owner-selector : .card-owner}
      * 
      * Furthermore, it contains an `card_logos` object which provides a custom set of images to use as card's logos:
      * 
@@ -433,9 +487,12 @@ var Mynix_FlipCard = (function($) {
      * the card type and the value is the card image name (without path)
      * 
      */
-    function init(data) {
-        if (UNDEF === typeof data)
+    function init(options) {
+        if (UNDEF === typeof options || !options) {
             return;
+        }
+
+        data = options;
 
         if (data.hasOwnProperty('card_logos')) {
             card_logos = data.card_logos;
@@ -452,7 +509,7 @@ var Mynix_FlipCard = (function($) {
         $(data.number + ',' + data.expiry + ',' + data.owner).on('focusin', onFocusInFrontSide);
 
         // automatically set card style by external event
-        $('body').on('payment.cardType', onCardTypeChange).on('payment.cardFlipDegree', onCardFlipDegree).on(
+        $('body').on('payment.cardType', onCardTypeChange).on('payment.cardFlipDegree', onCardFlipChange).on(
                 'payment.cardBaseColor', onCardColorChange).on('payment.cardTopColor', onCardTopColorChange);
     }
 
@@ -460,6 +517,10 @@ var Mynix_FlipCard = (function($) {
      * Unbinds from the DOM the events bounded during initialization.
      */
     function finalize() {
+        if (!data) {
+            return;
+        }
+
         $(data.number + ',' + data.expiry + ',' + data.cvv + ',' + data.owner).off('keyup keypress blur change',
                 onInputChange);
 
