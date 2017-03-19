@@ -1,5 +1,7 @@
 var Mynix_FlipCard = (function($) {
 
+    var UNDEF = 'undefined';
+
     // an object that points to the card brand logo images; the object keys are:
     // {path:url,format:png|jpg|etc,img:{visa:name.format,maestro:name.format,mastercard:name.format,..}}
     var card_logos = null;
@@ -173,7 +175,7 @@ var Mynix_FlipCard = (function($) {
     function hex2rgba(hex, a) {
         var c = hextorgb(hex);
 
-        a = 'undefined' == typeof a ? 0 : a;
+        a = UNDEF === typeof a ? 0 : a;
 
         return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + a + ')';
     }
@@ -253,7 +255,7 @@ var Mynix_FlipCard = (function($) {
         $('.lines-down').removeClass('lines_down-custom');
         $('.lines-up').removeClass('lines_up-custom');
 
-        if ('undefined' == typeof color)
+        if (UNDEF === typeof color)
             return;
         var c = hextorgb(color), base;
 
@@ -308,7 +310,7 @@ var Mynix_FlipCard = (function($) {
         if ('unknown' != name) {
             var path = logo_default_path, format = logo_default_format, src = path + name + '.' + logo_default_format;
 
-            if (null !== card_logos && 'undefined' != typeof card_logos) {
+            if (null !== card_logos && UNDEF !== typeof card_logos) {
                 if (card_logos.hasOwnProperty('path')) {
                     path = card_logos.path;
                 }
@@ -372,7 +374,7 @@ var Mynix_FlipCard = (function($) {
      * 
      */
     function init(data) {
-        if ('undefined' == typeof data)
+        if (UNDEF === typeof data)
             return;
 
         if (data.hasOwnProperty('card_logos')) {
@@ -384,7 +386,7 @@ var Mynix_FlipCard = (function($) {
                 function(item) {
                     var sel = $(this), val = item.target.value;
 
-                    if ('undefined' === typeof val)
+                    if (UNDEF === typeof val)
                         return;
 
                     // make sure we preserve the space take by the field, even when empty
