@@ -131,6 +131,63 @@ var Mynix_FlipCard = (function($) {
     var flip_status = '0';// current flip direction in degrees
     var flip_back = '-180';// back face flip direction in degrees
 
+    var onInputChange = function(item) {
+        var sel = $(this), val = item.target.value;
+
+        if (UNDEF === typeof val)
+            return;
+
+        // make sure we preserve the space take by the field, even when empty
+        val.length || (val = $(this).attr('placeholder'));
+        val.length || (val = '\t');
+
+        if (sel.is($(data.number))) {
+            $('.card-number').html(val);
+            $('.first-digits').html(val.substr(0, 4));
+        }
+        if (sel.is($(data.expiry))) {
+            $('.card-expiry').html(val);
+        }
+        if (sel.is($(data.cvv))) {
+            $('.card-cvc').html(val);
+        }
+        if (sel.is($(data.owner))) {
+            $('.card-owner').html($(data.owner).map(function() {
+                return $(this).val();
+            }).get().join(' '));
+        }
+    };
+
+    var onCVVFocusIn = function() {
+        flip_card(flip_back);
+    };
+
+    var onCVVFocusOut = function() {
+        flip_card('0');// flip to front
+    };
+
+    var onFocusInFrontSide = function() {
+        flip_card('0');// flip to front
+    };
+
+    var onCardTypeChange = function(sender, cardType) {
+        setCardStyle(cardType);
+    };
+
+    var onCardFlipChange = function(sender, degree) {
+        flip_back = degree;
+    };
+
+    var onCardColorChange = function(sender, color) {
+        changeBaseColor(color);
+    };
+
+    var onCardTopColorChange = function(sender, color) {
+        $('.card-brand-wrapper').css({
+            'background-color' : color
+        });
+    };
+
     function get_card_styles() {
         return card_styles;
     }
@@ -363,14 +420,17 @@ var Mynix_FlipCard = (function($) {
     }
 
     /**
-     * Initialize the class by the given data
+     * Initializes the class by the given data. Binds its events to the DOM elements.
      * 
      * @param data
-     *            An object which provides a map to the name of expected HTML elements: number:card-number,
-     *            expiry:card-expiry, cvv:card-cvc, owner:card-owner. Furthermore, it contains an `card_logos` object which
-     *            provides a custom set of images to use as card's logos: path:url to images folder, format:the image format
-     *            (eg. png), img:array of images for each card brand where the key is the card type and the value is the card
-     *            image name (without path).
+     *            An object which provides a map to the name of expected HTML elements:
+     * 
+     * {number:card-number, expiry:card-expiry, cvv:card-cvc, owner:card-owner}
+     * 
+     * Furthermore, it contains an `card_logos` object which provides a custom set of images to use as card's logos:
+     * 
+     * -path:url to images folder, format:the image format (eg. png), img:array of images for each card brand where the key is
+     * the card type and the value is the card image name (without path)
      * 
      */
     function init(data) {
@@ -382,62 +442,38 @@ var Mynix_FlipCard = (function($) {
         }
 
         // event to sync card number
-        $(data.number + ',' + data.expiry + ',' + data.cvv + ',' + data.owner).on('keyup keypress blur change',
-                function(item) {
-                    var sel = $(this), val = item.target.value;
-
-                    if (UNDEF === typeof val)
-                        return;
-
-                    // make sure we preserve the space take by the field, even when empty
-                    val.length || (val = $(this).attr('placeholder'));
-                    val.length || (val = '\t');
-
-                    if (sel.is($(data.number))) {
-                        $('.card-number').html(val);
-                        $('.first-digits').html(val.substr(0, 4));
-                    }
-                    if (sel.is($(data.expiry))) {
-                        $('.card-expiry').html(val);
-                    }
-                    if (sel.is($(data.cvv))) {
-                        $('.card-cvc').html(val);
-                    }
-                    if (sel.is($(data.owner))) {
-                        $('.card-owner').html($(data.owner).map(function() {
-                            return $(this).val();
-                        }).get().join(' '));
-                    }
-                }).trigger('keypress');
+        $(data.number + ',' + data.expiry + ',' + data.cvv + ',' + data.owner)
+                .on('keyup keypress blur change', onInputChange).trigger('keypress');
 
         // flip card back
-        $(data.cvv).focusin(function() {
-            flip_card(flip_back);
-        }).blur(function() {
-            flip_card('0');// flip to front
-        });
+        $(data.cvv).on('focusin', onCVVFocusIn).on('blur', onCVVFocusOut);
 
         // flip card front
-        $(data.number + ',' + data.expiry + ',' + data.owner).focusin(function() {
-            flip_card('0');// flip to front
-        });
+        $(data.number + ',' + data.expiry + ',' + data.owner).on('focusin', onFocusInFrontSide);
+
+        // automatically set card style by external event
+        $('body').on('payment.cardType', onCardTypeChange).on('payment.cardFlipDegree', onCardFlipDegree).on(
+                'payment.cardBaseColor', onCardColorChange).on('payment.cardTopColor', onCardTopColorChange);
     }
 
-    // automatically set card style by external event
-    $('body').on('payment.cardType', function(sender, cardType) {
-        setCardStyle(cardType);
-    }).on('payment.cardFlipDegree', function(sender, degree) {
-        flip_back = degree;
-    }).on('payment.cardBaseColor', function(sender, color) {
-        changeBaseColor(color);
-    }).on('payment.cardTopColor', function(sender, color) {
-        $('.card-brand-wrapper').css({
-            'background-color' : color
-        });
-    });
+    /**
+     * Unbinds from the DOM the events bounded during initialization.
+     */
+    function finalize() {
+        $(data.number + ',' + data.expiry + ',' + data.cvv + ',' + data.owner).off('keyup keypress blur change',
+                onInputChange);
+
+        $(data.number + ',' + data.expiry + ',' + data.owner).off('focusin', onFocusInFrontSide);
+
+        $(data.cvv).off('focusin', onCVVFocusIn).off('blur', onCVVFocusOut);
+
+        $('body').off('payment.cardType', onCardTypeChange).off('payment.cardFlipDegree', onCardFlipChange).off(
+                'payment.cardBaseColor', onCardColorChange).off('payment.cardTopColor', onCardTopColorChange);
+    }
 
     return {
         init : init,
+        finalize : finalize,
         get_card_styles : get_card_styles
     };
 
